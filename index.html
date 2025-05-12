@@ -40,29 +40,34 @@
     <div class="caixa-centralizada">
       <h1 class="titulo-maior">Criptografia RSA</h1>
       <h2 class="titulo2">O que você deseja fazer?</h2>
-      <select class="caixa-opcoes" onchange="atualizarFormulario()">
+      <select class="caixa-opcoes" id="opcoes" onchange="atualizarFormulario()">
         <option value="opcao1">1 - Gerar chave pública</option>
         <option value="opcao2">2 - Encriptar mensagem</option>
         <option value="opcao3">3 - Desencriptar mensagem</option>
       </select>
 
       <h2 class="titulo2 titulo-p">Digite o valor de p (número primo):</h2>
-      <input class="caixa-pequena campo-p" type="text" placeholder="Ex: 17">
+      <input class="caixa-pequena campo-p" id="campo-p" type="text" placeholder="Ex: 17">
 
       <h2 class="titulo2 titulo-q">Digite o valor de q (número primo):</h2>
-      <input class="caixa-pequena campo-q" type="text" placeholder="Ex: 19">
+      <input class="caixa-pequena campo-q" id="campo-q" type="text" placeholder="Ex: 19">
 
       <h2 class="titulo2 titulo-e">Digite o valor de e (público):</h2>
-      <input class="caixa-pequena campo-e" type="text" placeholder="Ex: 7">
+      <input class="caixa-pequena campo-e" id="campo-e" type="text" placeholder="Ex: 7">
 
-      <button class="botao-executar">Executar</button>
-      <div class="caixa-result"></div>
+      <!-- Adicionando campos para mensagem e resultado -->
+      <div id="mensagem-container" style="display: none;">
+        <h2 class="titulo2 titulo-mensagem">Digite a mensagem:</h2>
+        <input class="caixa-grande campo-mensagem" id="campo-mensagem" type="text" placeholder="Sua mensagem aqui">
+      </div>
+
+      <button class="botao-executar" id="botao-executar" disabled>Executar</button>
+      <div class="caixa-result" id="caixa-resultado"></div>
     </div>
   </div>
 
+  <!-- Carrega o WebAssembly e scripts na ordem correta -->
+  <script src="back/RSA.js"></script>
+  <script src="front/script.js"></script>
 </body>
-
-<!-- Carrega o WebAssembly -->
-<script src="back/RSA.js"></script>
-<script src="front/script.js"></script>
 </html>
