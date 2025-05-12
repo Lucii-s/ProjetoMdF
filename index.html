@@ -7,6 +7,25 @@
   <link rel="stylesheet" href="front/style.css" />
 </head>
 
+<script>
+  function run_wasm() {
+    const p = document.querySelector("#p").value;
+    const q = document.querySelector("#q").value;
+    const e = document.querySelector("#e").value;
+
+    const result = Module.ccall(
+      "gerarChavesRSA", // Nome da função C/C++
+      "string",          // Tipo de retorno
+      ["string", "string", "string"], // Tipos dos argumentos
+      [p, q, e]          // Argumentos
+    );
+
+    document.querySelector(".caixa-result").innerHTML = result;
+  }
+
+  document.querySelector(".botao-executar").addEventListener("click", run_wasm);
+</script>
+
 <body>
   <div class="container">
     <div class="caixa-centralizada">
@@ -19,13 +38,13 @@
       </select>
 
       <h2 class="titulo2 titulo-p">Digite o valor de p (número primo):</h2>
-      <input class="caixa-pequena campo-p" type="text" id="p" placeholder="Ex: 17" />
+      <input id="p" class="caixa-pequena campo-p" type="text" placeholder="Ex: 17" />
 
       <h2 class="titulo2 titulo-q">Digite o valor de q (número primo):</h2>
-      <input class="caixa-pequena campo-q" type="text" id="q" placeholder="Ex: 19" />
+      <input id="q" class="caixa-pequena campo-q" type="text" placeholder="Ex: 19" />
 
       <h2 class="titulo2 titulo-e">Digite o valor de e (público):</h2>
-      <input class="caixa-pequena campo-e" type="text" id="e" placeholder="Ex: 7" />
+      <input id="e" class="caixa-pequena campo-e" type="text" placeholder="Ex: 7" />
 
       <div class="grupo-decript escondido">
         <h2 class="titulo2 titulo-decript">Digite sua mensagem encriptada:</h2>
@@ -62,23 +81,9 @@
         console.error('(WASM)', text);
       }
     };
+</script>
+  
 
-    function run_wasm() {
-      var p = document.querySelector("#p").value;
-      var q = document.querySelector("#q").value;
-      var e = document.querySelector("#e").value;
-
-      // Chama a função gerarChavesRSA no WebAssembly
-      var result = Module.ccall(
-        'gerarChavesRSA',  // Nome da função no C
-        'string',           // Tipo de retorno esperado
-        ['string', 'string', 'string'],  // Tipos dos parâmetros
-        [p, q, e]           // Parâmetros passados para a função
-      );
-      
-      document.querySelector(".caixa-result").innerHTML = result;
-    }
-  </script>
 
   <script src="RSA.js"></script>
   <script src="script.js"></script>
