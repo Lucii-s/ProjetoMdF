@@ -2,10 +2,11 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Criptografia RSA</title>
-  <link rel="stylesheet" href="front/style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <div class="container">
     <div class="caixa-centralizada">
@@ -25,6 +26,11 @@
 
       <h2 class="titulo2 titulo-e">Digite o valor de e (público):</h2>
       <input class="caixa-pequena campo-e" type="text" placeholder="Ex: 7" />
+
+      <div class="grupo-decript escondido">
+        <h2 class="titulo2 titulo-decript">Digite sua mensagem encriptada:</h2>
+        <input class="caixa-pequena campo-decript" type="text" placeholder="Ex: 288 60 280" />
+      </div>
 
       <button class="botao-executar">Executar</button>
       <div class="caixa-result"></div>
