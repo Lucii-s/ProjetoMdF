@@ -4,71 +4,173 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Criptografia RSA</title>
-  <link rel="stylesheet" href="front/style.css">
-  
-  <!-- Configuração do módulo WebAssembly -->
-  <script>
-    var Module = {
-      wasmBinaryFile: 'back/RSA.wasm',
-      locateFile: function(path) {
-        if (path.endsWith('.wasm')) return 'back/RSA.wasm';
-        return path;
-      },
-      onRuntimeInitialized: function() {
-        console.log("Módulo RSA carregado e pronto!");
-        document.querySelector('.botao-executar').disabled = false;
-        
-        // Mostra mensagem de status
-        const status = document.createElement('div');
-        status.id = 'wasm-status';
-        status.style.color = 'green';
-        status.textContent = '✓ Módulo de criptografia carregado';
-        document.querySelector('.caixa-centralizada').appendChild(status);
-      },
-      print: function(text) {
-        console.log('(WASM)', text);
-      },
-      printErr: function(text) {
-        console.error('(WASM)', text);
-      }
-    };
-  </script>
+  <style>
+    @font-face {
+      font-family: 'Monocraft';
+      src: url('fonts/Monocraft-Regular.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Monocraft', sans-serif;
+      background-color: rgba(244, 248, 211, 0.9686);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .caixa-centralizada {
+      width: 100%;
+      max-width: 460px;
+      background-color: rgba(247, 207, 216, 0.74);
+      border: 2px solid black;
+      border-radius: 7.5px;
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+      box-sizing: border-box;
+    }
+
+    .titulo-maior {
+      text-align: center;
+      font-size: 24px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    .titulo2 {
+      font-size: 16px;
+      margin: 15px 0 5px 0;
+    }
+
+    .caixa-pequena,
+    .caixa-opcoes,
+    .botao-executar,
+    .caixa-result {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 7px;
+      font-family: 'Monocraft', monospace;
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+      border: 1px solid black;
+    }
+
+    .caixa-pequena,
+    .caixa-opcoes {
+      height: 40px;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+
+    .caixa-pequena::placeholder {
+      color: rgba(219, 184, 184, 1);
+    }
+
+    .botao-executar {
+      height: 50px;
+      background-color: rgba(142, 125, 190, 1);
+      font-size: 20px;
+      margin-top: 10px;
+      color: rgb(0, 0, 0);
+      border: none;
+      cursor: pointer;
+    }
+
+    .botao-executar:hover {
+      background-color: rgba(120, 100, 160, 1);
+    }
+
+    .caixa-result {
+      height: 70px;
+      background-color: rgba(210, 195, 252, 1);
+      font-size: 18px;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: black;
+      padding: 10px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
 </head>
-  
+
 <body>
   <div class="container">
     <div class="caixa-centralizada">
       <h1 class="titulo-maior">Criptografia RSA</h1>
       <h2 class="titulo2">O que você deseja fazer?</h2>
-      <select class="caixa-opcoes" id="opcoes" onchange="atualizarFormulario()">
+      <select class="caixa-opcoes" onchange="atualizarFormulario()">
         <option value="opcao1">1 - Gerar chave pública</option>
         <option value="opcao2">2 - Encriptar mensagem</option>
         <option value="opcao3">3 - Desencriptar mensagem</option>
       </select>
 
       <h2 class="titulo2 titulo-p">Digite o valor de p (número primo):</h2>
-      <input class="caixa-pequena campo-p" id="campo-p" type="text" placeholder="Ex: 17">
+      <input class="caixa-pequena campo-p" type="text" placeholder="Ex: 17">
 
       <h2 class="titulo2 titulo-q">Digite o valor de q (número primo):</h2>
-      <input class="caixa-pequena campo-q" id="campo-q" type="text" placeholder="Ex: 19">
+      <input class="caixa-pequena campo-q" type="text" placeholder="Ex: 19">
 
       <h2 class="titulo2 titulo-e">Digite o valor de e (público):</h2>
-      <input class="caixa-pequena campo-e" id="campo-e" type="text" placeholder="Ex: 7">
+      <input class="caixa-pequena campo-e" type="text" placeholder="Ex: 7">
 
-      <!-- Adicionando campos para mensagem e resultado -->
-      <div id="mensagem-container" style="display: none;">
-        <h2 class="titulo2 titulo-mensagem">Digite a mensagem:</h2>
-        <input class="caixa-grande campo-mensagem" id="campo-mensagem" type="text" placeholder="Sua mensagem aqui">
-      </div>
-
-      <button class="botao-executar" id="botao-executar" disabled>Executar</button>
-      <div class="caixa-result" id="caixa-resultado"></div>
-      
+      <button class="botao-executar">Executar</button>
+      <div class="caixa-result"></div>
     </div>
   </div>
 
-  <!-- Carrega o WebAssembly e scripts na ordem correta -->
-<script src="back/RSA.js"></script>
-<script src="front/script.js"></script>
+  <script>
+    function atualizarFormulario() {
+      const opcao = document.querySelector('.caixa-opcoes').value;
+
+      const tituloP = document.querySelector('.titulo-p');
+      const tituloQ = document.querySelector('.titulo-q');
+      const tituloE = document.querySelector('.titulo-e');
+
+      const campoP = document.querySelector('.campo-p');
+      const campoQ = document.querySelector('.campo-q');
+      const campoE = document.querySelector('.campo-e');
+
+      if (opcao === "opcao1") {
+        tituloP.innerText = "Digite o valor de p (número primo):";
+        tituloQ.innerText = "Digite o valor de q (número primo):";
+        tituloE.innerText = "Digite o valor de e (público):";
+
+        campoP.placeholder = "Ex: 17";
+        campoQ.placeholder = "Ex: 19";
+        campoE.placeholder = "Ex: 7";
+      } else if (opcao === "opcao2") {
+        tituloP.innerText = "Digite sua mensagem a ser criptografada:";
+        tituloQ.innerText = "Digite o valor de 'e' (chave pública):";
+        tituloE.innerText = "Digite o valor de 'n' (chave pública):";
+
+        campoP.placeholder = "Ex: Tralalero tralala";
+        campoQ.placeholder = "Ex: 7";
+        campoE.placeholder = "Ex: 323";
+      } else if (opcao === "opcao3") {
+        tituloP.innerText = "Digite o valor de 'd' (chave privada):";
+        tituloQ.innerText = "Digite o valor de 'n' (chave pública):";
+        tituloE.innerText = "Digite sua mensagem encriptada:";
+
+        campoP.placeholder = "Ex: 17";
+        campoQ.placeholder = "Ex: 323";
+        campoE.placeholder = "Ex: 288 60 280";
+      }
+    }
+  </script>
 </body>
 </html>
