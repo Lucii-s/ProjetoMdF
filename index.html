@@ -7,6 +7,34 @@
   <link rel="stylesheet" href="front/style.css" />
 </head>
 
+  <script>
+    var Module = {
+      wasmBinaryFile: 'back/RSA.wasm',
+      locateFile: function(path) {
+        if (path.endsWith('.wasm')) return 'back/RSA.wasm';
+        return path;
+      },
+      onRuntimeInitialized: function() {
+        console.log("Módulo RSA carregado e pronto!");
+        document.querySelector('.botao-executar').disabled = false;
+        
+        // Mostra mensagem de status
+        const status = document.createElement('div');
+        status.id = 'wasm-status';
+        status.style.color = 'green';
+        status.textContent = '✓ Módulo de criptografia carregado';
+        document.querySelector('.caixa-centralizada').appendChild(status);
+      },
+      print: function(text) {
+        console.log('(WASM)', text);
+      },
+      printErr: function(text) {
+        console.error('(WASM)', text);
+      }
+    };
+  </script>
+</head>
+
 <body>
   <div class="container">
     <div class="caixa-centralizada">
