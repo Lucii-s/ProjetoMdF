@@ -1,237 +1,206 @@
+#ifndef RSA_CRYPTO_H
+#define RSA_CRYPTO_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "gmp_inst/gmp-6.3.0/mini-gmp/mini-gmp.c"
+#include <gmp.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-// Função de verificação de primos
-static int ehPrimo(mpz_t n)
-{
-    if (mpz_cmp_ui(n, 2) < 0)
-        return 0;
-    if (mpz_cmp_ui(n, 2) == 0)
-        return 1;
-    if (mpz_even_p(n))
-        return 0;
-
-    mpz_t i, limit, remainder;
-    mpz_init(i);
-    mpz_init(limit);
-    mpz_init(remainder);
-    mpz_sqrt(limit, n);
-    mpz_add_ui(limit, limit, 1);
-
-    for (mpz_set_ui(i, 3); mpz_cmp(i, limit) <= 0; mpz_add_ui(i, i, 2))
-    {
-        mpz_mod(remainder, n, i);
-        if (mpz_cmp_ui(remainder, 0) == 0)
-        {
-            mpz_clear(i);
-            mpz_clear(limit);
-            mpz_clear(remainder);
-            return 0;
-        }
-    }
-
-    mpz_clear(i);
-    mpz_clear(limit);
-    mpz_clear(remainder);
-    return 1;
-}
-
-
-char *gerarChavesRSA(const char *p_str, const char *q_str, const char *e_str)
-{
-    static char resultado[4096] = {0};
-
+// Função para gerar chaves RSA
+void gerar_chaves_rsa() {
     mpz_t p, q, e, n, phi, d, p1, q1;
-    mpz_init(p);
-    mpz_init(q);
-    mpz_init(e);
-    mpz_init(n);
-    mpz_init(phi);
-    mpz_init(d);
-    mpz_init(p1);
-    mpz_init(q1);
+    mpz_inits(p, q, e, n, phi, d, p1, q1, NULL);
 
-    // Validar entradas
-    if (mpz_set_str(p, p_str, 10) != 0 ||
-        mpz_set_str(q, q_str, 10) != 0 ||
-        mpz_set_str(e, e_str, 10) != 0)
-    {
-        strcpy(resultado, "Erro: Valores inválidos para p, q ou e");
-        goto cleanup;
-    }
+    // Solicita os valores ao usuário
+    gmp_printf("Digite o valor de p: ");
+    gmp_scanf("%Zd", p);
 
-    // Verificar se são primos
-    if (!ehPrimo(p) || !ehPrimo(q))
-    {
-        strcpy(resultado, "Erro: p e q devem ser números primos");
-        goto cleanup;
-    }
+    gmp_printf("Digite o valor de q: ");
+    gmp_scanf("%Zd", q);
 
-    // Calcular n = p * q
+    gmp_printf("Digite o valor de e: ");
+    gmp_scanf("%Zd", e);
+
+    // Calcula n = p * q
     mpz_mul(n, p, q);
 
-    // Calcular phi(n) = (p-1)*(q-1)
+    // Calcula phi = (p - 1) * (q - 1)
     mpz_sub_ui(p1, p, 1);
     mpz_sub_ui(q1, q, 1);
     mpz_mul(phi, p1, q1);
 
-    // Verificar se e e phi(n) são coprimos
-    if (mpz_invert(d, e, phi) == 0)
-    {
-        strcpy(resultado, "Erro: e deve ser coprimo com (p-1)*(q-1)");
-        goto cleanup;
-    }
-
-    // Formatar o resultado
-    char temp[1024];
-    resultado[0] = '\0';
-
-    // Chave pública (e, n)
-    strcat(resultado, "Chave Pública (e, n):\n");
-    mpz_get_str(temp, 10, e);
-    strcat(resultado, "e = ");
-    strcat(resultado, temp);
-    strcat(resultado, "\n");
-
-    mpz_get_str(temp, 10, n);
-    strcat(resultado, "n = ");
-    strcat(resultado, temp);
-    strcat(resultado, "\n\n");
-
-    // Chave privada (d, n)
-    strcat(resultado, "Chave Privada (d, n):\n");
-    mpz_get_str(temp, 10, d);
-    strcat(resultado, "d = ");
-    strcat(resultado, temp);
-    strcat(resultado, "\n");
-
-    mpz_get_str(temp, 10, n);
-    strcat(resultado, "n = ");
-    strcat(resultado, temp);
-
-cleanup:
-    mpz_clear(p);
-    mpz_clear(q);
-    mpz_clear(e);
-    mpz_clear(n);
-    mpz_clear(phi);
-    mpz_clear(d);
-    mpz_clear(p1);
-    mpz_clear(q1);
-
-    return resultado;
-}
-
-
-char *encriptarMensagem(const char *mensagem, const char *e_str, const char *n_str) {
-    static char resultado[8192] = {0};
-    mpz_t n, e, m, c;
-    mpz_init(n);
-    mpz_init(e);
-    mpz_init(m);
-    mpz_init(c);
-
-    // Validar entradas (agora com e primeiro)
-    if (mpz_set_str(e, e_str, 10) != 0 ||
-        mpz_set_str(n, n_str, 10) != 0) {
-        strcpy(resultado, "Erro: Valores inválidos para e ou n");
-        goto cleanup;
-    }
-
-    // Processar cada caractere da mensagem
-    resultado[0] = '\0';
-    strcat(resultado, "Mensagem criptografada:\n");
-
-    char temp[256];
-    for (size_t i = 0; i < strlen(mensagem); i++) {
-        mpz_set_ui(m, (unsigned long)mensagem[i]);
-        mpz_powm(c, m, e, n); // c = m^e mod n
-
-        mpz_get_str(temp, 10, c);
-        strcat(resultado, temp);
-        strcat(resultado, " ");
-    }
-
-cleanup:
-    mpz_clear(n);
-    mpz_clear(e);
-    mpz_clear(m);
-    mpz_clear(c);
-
-    return resultado;
-}
-
-char *desencriptarMensagem(const char *p_str, const char *q_str, const char *e_str, const char *mensagem_encriptada) {
-    static char resultado[8192] = {0};
-    mpz_t p, q, e, n, phi, d, c, m;
-    
-    // Inicializar todas as variáveis GMP
-    mpz_init(p);
-    mpz_init(q);
-    mpz_init(e);
-    mpz_init(n);
-    mpz_init(phi);
-    mpz_init(d);
-    mpz_init(c);
-    mpz_init(m);
-
-    // Validar entradas
-    if (mpz_set_str(p, p_str, 10) != 0 ||
-        mpz_set_str(q, q_str, 10) != 0 ||
-        mpz_set_str(e, e_str, 10) != 0) {
-        strcpy(resultado, "Erro: Valores inválidos para p, q ou e");
-        goto cleanup;
-    }
-
-    // Verificar se são primos
-    if (!ehPrimo(p) || !ehPrimo(q)) {
-        strcpy(resultado, "Erro: p e q devem ser números primos");
-        goto cleanup;
-    }
-
-    // Calcular n e phi(n)
-    mpz_mul(n, p, q);
-    mpz_sub_ui(p, p, 1);  // p = p-1
-    mpz_sub_ui(q, q, 1);  // q = q-1
-    mpz_mul(phi, p, q);   // phi = (p-1)*(q-1)
-
-    // Calcular d (chave privada)
+    // Verifica se e tem inverso modular em relação a phi
     if (mpz_invert(d, e, phi) == 0) {
-        strcpy(resultado, "Erro: e deve ser coprimo com (p-1)*(q-1)");
-        goto cleanup;
+        printf("Erro: e e phi(n) não são coprimos!\n");
+        mpz_clears(p, q, e, n, phi, d, p1, q1, NULL);
+        return;
     }
 
-    // Processar mensagem encriptada
-    resultado[0] = '\0';
-    strcat(resultado, "Mensagem descriptografada:\n");
+    // Exibe as chaves
+    gmp_printf("Sua chave pública é: (e=%Zd, n=%Zd)\n", e, n);
+    gmp_printf("Sua chave privada é: (d=%Zd, n=%Zd)\n", d, n);
 
-    char *token, *resto = strdup(mensagem_encriptada);
-    token = strtok(resto, " ");
+    // Cria diretório "chaves" se não existir
+    mkdir("chaves", 0755); // Permissão padrão
 
+    // Salva chave pública
+    FILE *chavePublica = fopen("chaves/chave_publica.txt", "w");
+    if (chavePublica == NULL) {
+        perror("Erro ao criar chave_publica.txt");
+        return;
+    }
+    gmp_fprintf(chavePublica, "%Zd %Zd", e, n);
+    fclose(chavePublica);
+
+    // Salva chave privada
+    FILE *chavePrivada = fopen("chaves/chave_privada.txt", "w");
+    if (chavePrivada == NULL) {
+        perror("Erro ao criar chave_privada.txt");
+        return;
+    }
+    gmp_fprintf(chavePrivada, "%Zd %Zd", d, n);
+    fclose(chavePrivada);
+
+    mpz_clears(p, q, e, n, phi, d, p1, q1, NULL);
+}
+
+// Função para criptografar mensagem
+void criptografar_mensagem() {
+    char *mensagem = NULL;
+    size_t tamanho = 0;
+    char n_str[1024], e_str[1024];
+
+    printf("Digite a mensagem: ");
+    ssize_t lidos = getline(&mensagem, &tamanho, stdin);
+    if (lidos == -1) {
+        perror("Erro ao ler mensagem");
+        return;
+    }
+    mensagem[strcspn(mensagem, "\n")] = '\0'; 
+
+    printf("Digite o valor de n: ");
+    fgets(n_str, sizeof(n_str), stdin);
+    n_str[strcspn(n_str, "\n")] = '\0';
+
+    printf("Digite o valor de e: ");
+    fgets(e_str, sizeof(e_str), stdin);
+    e_str[strcspn(e_str, "\n")] = '\0';
+
+    mpz_t n, e, m, c;
+    mpz_inits(n, e, m, c, NULL);
+    mpz_set_str(n, n_str, 10); 
+    mpz_set_str(e, e_str, 10);  
+
+    printf("Mensagem criptografada (valores inteiros):\n");
+
+    for (size_t i = 0; i < strlen(mensagem); i++) {
+        char letra = mensagem[i];
+        int ascii = (int)letra;
+        mpz_set_ui(m, ascii);
+        mpz_powm(c, m, e, n);
+        gmp_printf("%Zd ", c); 
+    }
+
+    printf("\n");
+
+    mpz_clears(n, e, m, c, NULL);
+    free(mensagem);
+}
+
+// Função auxiliar para exponenciação modular
+void exp_modular(mpz_t resultado, mpz_t base, mpz_t expoente, mpz_t modulo) {
+    mpz_powm(resultado, base, expoente, modulo);
+}
+
+// Função auxiliar para verificar se um número é primo
+int eh_primo(mpz_t num) {
+    return mpz_probab_prime_p(num, 25) > 0;
+}
+
+// Função auxiliar para calcular inverso modular
+void inverso_modular(mpz_t resultado, mpz_t a, mpz_t m) {
+    if (mpz_invert(resultado, a, m) == 0) {
+        gmp_printf("Erro: O inverso modular não existe para %Zd modulo %Zd\n", a, m);
+        exit(1);
+    }
+}
+
+// Função para descriptografar mensagem
+// Função para descriptografar mensagem a partir de um arquivo
+void descriptografar_mensagem() {
+    mpz_t p, q, e, d, n, phi, curr, descriptado;
+    mpz_inits(p, q, e, d, n, phi, curr, descriptado, NULL);
+
+    // Abre o arquivo fixo "critogtafia.txt"
+    FILE *arquivo = fopen("critogtafia.txt", "r");
+    if (arquivo == NULL) {
+        perror("Erro ao abrir o arquivo critogtafia.txt");
+        mpz_clears(p, q, e, d, n, phi, curr, descriptado, NULL);
+        return;
+    }
+
+    // Lê o conteúdo do arquivo
+    char *conteudo = NULL;
+    size_t tamanho = 0;
+    ssize_t lidos = getdelim(&conteudo, &tamanho, '\0', arquivo);
+    fclose(arquivo);
+    
+    if (lidos == -1) {
+        perror("Erro ao ler o arquivo critogtafia.txt");
+        free(conteudo);
+        mpz_clears(p, q, e, d, n, phi, curr, descriptado, NULL);
+        return;
+    }
+
+    // Solicita os valores p, q e e
+    do {
+        printf("Digite o valor de p (deve ser primo): ");
+        gmp_scanf("%Zd", p);
+    } while (!eh_primo(p));
+
+    do {
+        printf("Digite o valor de q (deve ser primo): ");
+        gmp_scanf("%Zd", q);
+    } while (!eh_primo(q));
+
+    printf("Digite o valor de e: ");
+    gmp_scanf("%Zd", e);
+
+    // Calcula n = p * q
+    mpz_mul(n, p, q);
+
+    // Calcula phi = (p - 1) * (q - 1)
+    mpz_sub_ui(p, p, 1);
+    mpz_sub_ui(q, q, 1);
+    mpz_mul(phi, p, q);
+
+    // Calcula d (inverso modular de e em relação a phi)
+    inverso_modular(d, e, phi);
+
+    // Processa a mensagem criptografada
+    printf("Mensagem descriptografada: ");
+    char *token = strtok(conteudo, " ");
     while (token != NULL) {
-        if (mpz_set_str(c, token, 10) == 0) {
-            mpz_powm(m, c, d, n); // m = c^d mod n
-            char caractere = (char)mpz_get_ui(m);
-            strncat(resultado, &caractere, 1);
+        if (mpz_set_str(curr, token, 10) == -1) {
+            printf("\nErro: Valor criptografado inválido encontrado\n");
+            break;
         }
+        exp_modular(descriptado, curr, d, n);
+        unsigned long caractere = mpz_get_ui(descriptado);
+        if (caractere > 255) {
+            printf("\nErro: Valor descriptografado inválido\n");
+            break;
+        }
+        printf("%c", (char)caractere);
         token = strtok(NULL, " ");
     }
+    printf("\n");
 
-    free(resto);
-
-cleanup:
-    // Liberar memória
-    mpz_clear(p);
-    mpz_clear(q);
-    mpz_clear(e);
-    mpz_clear(n);
-    mpz_clear(phi);
-    mpz_clear(d);
-    mpz_clear(c);
-    mpz_clear(m);
-
-    return resultado;
+    // Libera memória
+    mpz_clears(p, q, e, d, n, phi, curr, descriptado, NULL);
+    free(conteudo);
 }
 
+#endif
