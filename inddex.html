@@ -1,0 +1,212 @@
+// Configuração inicial quando a página carrega
+document.addEventListener('DOMContentLoaded', function() {
+    // Desabilita o botão até o WASM carregar
+    document.querySelector('.botao-executar').disabled = true;
+    
+    // Configura o botão executar
+    document.querySelector('.botao-executar').addEventListener('click', executarOperacao);
+    
+    // Atualiza o formulário inicialmente
+    atualizarFormulario();
+});
+
+// Função para atualizar os campos do formulário
+function atualizarFormulario() {
+    const opcao = document.querySelector('.caixa-opcoes').value;
+    const tituloP = document.querySelector('.titulo-p');
+    const tituloQ = document.querySelector('.titulo-q');
+    const tituloE = document.querySelector('.titulo-e');
+
+    const campoP = document.querySelector('.campo-p');
+    const campoQ = document.querySelector('.campo-q');
+    const campoE = document.querySelector('.campo-e');
+
+    if (opcao === "opcao1") {
+        tituloP.innerText = "Digite o valor de p (número primo):";
+        tituloQ.innerText = "Digite o valor de q (número primo):";
+        tituloE.innerText = "Digite o valor de e (público):";
+
+        campoP.placeholder = "Ex: 17";
+        campoQ.placeholder = "Ex: 19";
+        campoE.placeholder = "Ex: 7";
+    } else if (opcao === "opcao2") {
+        tituloP.innerText = "Digite sua mensagem a ser criptografada:";
+        tituloQ.innerText = "Digite o valor de 'e' (chave pública):";
+        tituloE.innerText = "Digite o valor de 'n' (chave pública):";
+
+        campoP.placeholder = "Ex: Mensagem secreta";
+        campoQ.placeholder = "Ex: 7";
+        campoE.placeholder = "Ex: 323";
+    } else if (opcao === "opcao3") {
+        tituloP.innerText = "Digite o valor de p (número primo):";
+        tituloQ.innerText = "Digite o valor de q (número primo):";
+        tituloE.innerText = "Digite o valor de e (público):";
+
+        campoP.placeholder = "Ex: 17";
+        campoQ.placeholder = "Ex: 19";
+        campoE.placeholder = "Ex: 7";
+    }
+}
+
+// Função principal que executa a operação selecionada
+function executarOperacao() {
+    const opcao = document.querySelector('.caixa-opcoes').value;
+    const resultado = document.querySelector('.caixa-result');
+    resultado.innerHTML = "<p>Processando...</p>";
+
+    try {
+        if (opcao === "opcao1") {
+            gerarChaves();
+        } else if (opcao === "opcao2") {
+            criptografar();
+        } else if (opcao === "opcao3") {
+            descriptografar();
+        }
+    } catch (error) {
+        resultado.innerHTML = `<p class="erro">Erro: ${error.message}</p>`;
+        console.error("Erro na operação:", error);
+    }
+}
+
+// Função para gerar chaves RSA
+function gerarChaves() {
+    const p = document.querySelector('.campo-p').value;
+    const q = document.querySelector('.campo-q').value;
+    const e = document.querySelector('.campo-e').value;
+    const resultado = document.querySelector('.caixa-result');
+
+    // Aloca memória e converte strings
+    const pPtr = Module.allocateUTF8(p);
+    const qPtr = Module.allocateUTF8(q);
+    const ePtr = Module.allocateUTF8(e);
+
+    // Chama a função do WebAssembly
+    const resultPtr = Module._gerarChavesRSA(pPtr, qPtr, ePtr);
+    const resultStr = Module.UTF8ToString(resultPtr);
+
+    // Limpa a memória
+    Module._free(pPtr);
+    Module._free(qPtr);
+    Module._free(ePtr);
+    Module._free(resultPtr);
+
+    resultado.innerHTML = `<pre>${resultStr}</pre>`;
+}
+
+// Função para criptografar mensagem
+function criptografar() {
+    const msg = document.querySelector('.campo-p').value;
+    const e = document.querySelector('.campo-q').value;
+    const n = document.querySelector('.campo-e').value;
+    const resultado = document.querySelector('.caixa-result');
+
+    const msgPtr = Module.allocateUTF8(msg);
+    const ePtr = Module.allocateUTF8(e);
+    const nPtr = Module.allocateUTF8(n);
+
+    const resultPtr = Module._encriptarMensagem(msgPtr, ePtr, nPtr);
+    const resultStr = Module.UTF8ToString(resultPtr);
+
+    Module._free(msgPtr);
+    Module._free(ePtr);
+    Module._free(nPtr);
+    Module._free(resultPtr);
+
+    resultado.innerHTML = `<pre>${resultStr}</pre>`;
+}
+
+// Função para descriptografar mensagem
+function descriptografar() {
+    const p = document.querySelector('.campo-p').value;
+    const q = document.querySelector('.campo-q').value;
+    const e = document.querySelector('.campo-e').value;
+    const msgCripto = document.querySelector('.campo-p').value;
+    const resultado = document.querySelector('.caixa-result');
+
+    const pPtr = Module.allocateUTF8(p);
+    const qPtr = Module.allocateUTF8(q);
+    const ePtr = Module.allocateUTF8(e);
+    const msgPtr = Module.allocateUTF8(msgCripto);
+
+    const resultPtr = Module._desencriptarMensagem(pPtr, qPtr, ePtr, msgPtr);
+    const resultStr = Module.UTF8ToString(resultPtr);
+
+    Module._free(pPtr);
+    Module._free(qPtr);
+    Module._free(ePtr);
+    Module._free(msgPtr);
+    Module._free(resultPtr);
+
+    resultado.innerHTML = `<pre>${resultStr}</pre>`;
+}
+
+
+=============================html==================================
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criptografia RSA</title>
+  <link rel="stylesheet" href="front/style.css">
+  
+  <!-- Configuração do módulo WebAssembly -->
+  <script>
+    var Module = {
+      wasmBinaryFile: 'back/RSA.wasm',
+      locateFile: function(path) {
+        if (path.endsWith('.wasm')) return 'back/RSA.wasm';
+        return path;
+      },
+      onRuntimeInitialized: function() {
+        console.log("Módulo RSA carregado e pronto!");
+        document.querySelector('.botao-executar').disabled = false;
+        
+        // Mostra mensagem de status
+        const status = document.createElement('div');
+        status.id = 'wasm-status';
+        status.style.color = 'green';
+        status.textContent = '✓ Módulo de criptografia carregado';
+        document.querySelector('.caixa-centralizada').appendChild(status);
+      },
+      print: function(text) {
+        console.log('(WASM)', text);
+      },
+      printErr: function(text) {
+        console.error('(WASM)', text);
+      }
+    };
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="caixa-centralizada">
+      <h1 class="titulo-maior">Criptografia RSA</h1>
+      <h2 class="titulo2">O que você deseja fazer?</h2>
+      <select class="caixa-opcoes" onchange="atualizarFormulario()">
+        <option value="opcao1">1 - Gerar chave pública</option>
+        <option value="opcao2">2 - Encriptar mensagem</option>
+        <option value="opcao3">3 - Desencriptar mensagem</option>
+      </select>
+
+      <h2 class="titulo2 titulo-p">Digite o valor de p (número primo):</h2>
+      <input class="caixa-pequena campo-p" type="text" placeholder="Ex: 17">
+
+      <h2 class="titulo2 titulo-q">Digite o valor de q (número primo):</h2>
+      <input class="caixa-pequena campo-q" type="text" placeholder="Ex: 19">
+
+      <h2 class="titulo2 titulo-e">Digite o valor de e (público):</h2>
+      <input class="caixa-pequena campo-e" type="text" placeholder="Ex: 7">
+
+      <button class="botao-executar" disabled>Executar</button>
+      <div class="caixa-result"></div>
+    </div>
+  </div>
+
+  <!-- Carrega o WebAssembly -->
+  <script src="back/RSA.js"></script>
+  <script src="front/script.js"></script>
+</body>
+</html>
