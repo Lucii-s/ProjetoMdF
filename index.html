@@ -33,23 +33,31 @@
     };
 </script>
 
-<script>
-  function run_wasm() {
-    const p = document.querySelector("#p").value;
-    const q = document.querySelector("#q").value;
-    const e = document.querySelector("#e").value;
-
-    const result = Module.ccall(
-      "gerarChavesRSA", // Nome da função C/C++
-      "string",          // Tipo de retorno
-      ["string", "string", "string"], // Tipos dos argumentos
-      [p, q, e]          // Argumentos
-    );
-
-    document.querySelector(".caixa-result").innerHTML = result;
-  }
-
-  document.querySelector(".botao-executar").addEventListener("click", run_wasm);
+<script>  
+        function run_wasm(){
+          var result = Module.ccall(
+            "main" , 
+            "string" ,
+            null , 
+            null
+          );
+          console.log(result);
+          var p = document.querySelector("#p").value;
+          var q = document .querySelector("#q").value;
+          var e = document. querySelector("#e").value;
+          result = Module.ccall(
+            "gerarChavesRSA" , 
+            "string" ,
+            ["string","string"]
+            [p, q, e],
+          );
+          
+          document.querySelector(".caixa-result").innerHTML = result;
+        }
+        <input type="string" id = "p">
+        <input type="string" id = "q">
+        <input type="string" id = "e">
+        <button onclick="run_wasm()">Executar</button>
 </script>
 
 <body>
