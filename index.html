@@ -7,6 +7,36 @@
   <link rel="stylesheet" href="front/style.css" />
 </head>
 
+<body>
+  <div class="container">
+    <div class="caixa-centralizada">
+      <h1 class="titulo-maior">Criptografia RSA</h1>
+      <h2 class="titulo2">O que você deseja fazer?</h2>
+      <select class="caixa-opcoes" onchange="atualizarFormulario()">
+        <option value="opcao1">1 - Gerar chave pública</option>
+        <option value="opcao2">2 - Encriptar mensagem</option>
+        <option value="opcao3">3 - Desencriptar mensagem</option>
+      </select>
+
+      <h2 class="titulo2 titulo-p">Digite o valor de p (número primo):</h2>
+      <input class="caixa-pequena campo-p" type="text" id="p" placeholder="Ex: 17" />
+
+      <h2 class="titulo2 titulo-q">Digite o valor de q (número primo):</h2>
+      <input class="caixa-pequena campo-q" type="text" id="q" placeholder="Ex: 19" />
+
+      <h2 class="titulo2 titulo-e">Digite o valor de e (público):</h2>
+      <input class="caixa-pequena campo-e" type="text" id="e" placeholder="Ex: 7" />
+
+      <div class="grupo-decript escondido">
+        <h2 class="titulo2 titulo-decript">Digite sua mensagem encriptada:</h2>
+        <input class="caixa-pequena campo-decript" type="text" id="decript" placeholder="Ex: 288 60 280" />
+      </div>
+
+      <button class="botao-executar" onclick="run_wasm()">Executar</button>
+      <div class="caixa-result"></div>
+    </div>
+  </div>
+
   <script>
     var Module = {
       wasmBinaryFile: 'RSA.wasm',
@@ -32,38 +62,24 @@
         console.error('(WASM)', text);
       }
     };
+
+    function run_wasm() {
+      var p = document.querySelector("#p").value;
+      var q = document.querySelector("#q").value;
+      var e = document.querySelector("#e").value;
+
+      // Chama a função gerarChavesRSA no WebAssembly
+      var result = Module.ccall(
+        'gerarChavesRSA',  // Nome da função no C
+        'string',           // Tipo de retorno esperado
+        ['string', 'string', 'string'],  // Tipos dos parâmetros
+        [p, q, e]           // Parâmetros passados para a função
+      );
+      
+      document.querySelector(".caixa-result").innerHTML = result;
+    }
   </script>
-</head>
 
-<body>
-  <div class="container">
-    <div class="caixa-centralizada">
-      <h1 class="titulo-maior">Criptografia RSA</h1>
-      <h2 class="titulo2">O que você deseja fazer?</h2>
-      <select class="caixa-opcoes" onchange="atualizarFormulario()">
-        <option value="opcao1">1 - Gerar chave pública</option>
-        <option value="opcao2">2 - Encriptar mensagem</option>
-        <option value="opcao3">3 - Desencriptar mensagem</option>
-      </select>
-
-      <h2 class="titulo2 titulo-p">Digite o valor de p (número primo):</h2>
-      <input class="caixa-pequena campo-p" type="text" placeholder="Ex: 17" />
-
-      <h2 class="titulo2 titulo-q">Digite o valor de q (número primo):</h2>
-      <input class="caixa-pequena campo-q" type="text" placeholder="Ex: 19" />
-
-      <h2 class="titulo2 titulo-e">Digite o valor de e (público):</h2>
-      <input class="caixa-pequena campo-e" type="text" placeholder="Ex: 7" />
-
-      <div class="grupo-decript escondido">
-        <h2 class="titulo2 titulo-decript">Digite sua mensagem encriptada:</h2>
-        <input class="caixa-pequena campo-decript" type="text" placeholder="Ex: 288 60 280" />
-      </div>
-
-      <button class="botao-executar">Executar</button>
-      <div class="caixa-result"></div>
-    </div>
-  </div>
   <script src="RSA.js"></script>
   <script src="script.js"></script>
 </body>
