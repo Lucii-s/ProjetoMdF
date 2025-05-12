@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Criptografia RSA</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="caixa-centralizada">
+      <h1 class="titulo-maior">Criptografia RSA</h1>
+      <h2 class="titulo2">O que você deseja fazer?</h2>
+      <select class="caixa-opcoes" onchange="atualizarFormulario()">
+        <option value="opcao1">1 - Gerar chave pública</option>
+        <option value="opcao2">2 - Encriptar mensagem</option>
+        <option value="opcao3">3 - Desencriptar mensagem</option>
+        </select>
+
+        <form id = "formChave">
+          <h2 class="titulo2 titulo-p">Digite o valor de p (número primo):</h2>        
+          <input id="p" class="caixa-pequena campo-p" type="text" placeholder="Ex: 17" />
+
+          <h2 class="titulo2 titulo-q">Digite o valor de q (número primo):</h2>
+          <input id="q" class="caixa-pequena campo-q" type="text" placeholder="Ex: 19" />
+
+          <h2 class="titulo2 titulo-e">Digite o valor de e (público):</h2>
+          <input id="e" class="caixa-pequena campo-e" type="text" placeholder="Ex: 7" />
+          <button class="botao-executar" type="submit">Gerar Chaves</button> 
+
+          <div class="caixa-result">
+          <p>Chave pública: <span id="chavePub"></span></p>
+          </div>
+
+        </form>
+        
+        <form id = "formEncript">
+          <h2 class="titulo2 titulo-p">Digite sua mensagem a ser criptografada:</h2>        
+          <input id="encript" class="caixa-pequena campo-p" type="text" placeholder="Ex: Tralalero tralala" />
+          
+          <h2 class="titulo2 titulo-q">Digite o valor de 'e' (chave pública):</h2>
+          <input id="e" class="caixa-pequena campo-q" type="text" placeholder="Ex: 7" />
+          
+          <h2 class="titulo2 titulo-e">Digite o valor de 'n' (chave pública):</h2>
+          <input id="n" class="caixa-pequena campo-e" type="text" placeholder="Ex: 323" />
+          <button class="botao-executar" type="submit">Criptografar</button> 
+
+          <div class="caixa-result">
+          <p>Mensagem criptografada: <span id="chaveEncript"></span></p>
+        </div>
+
+        </form>
+        
+        <form id = "formDecript">
+          <h2 class="titulo2 titulo-q">Digite o valor de p (número primo):</h2>
+          <input id="pDecript" class="caixa-pequena campo-q" type="text" placeholder="Ex: 17" />
+          
+          <h2 class="titulo2 titulo-e">Digite o valor de q (chave pública):</h2>
+          <input id="qDecript" class="caixa-pequena campo-e" type="text" placeholder="Ex: 19" />
+          
+          <h2 class="titulo2 titulo-e">Digite o valor de e (chave pública):</h2>
+          <input id="eDecript" class="caixa-pequena campo-e" type="text" placeholder="Ex: 7" />
+          
+          <h2 class="titulo2 titulo-p">Digite sua mensagem encriptada:</h2>        
+          <input id="decript" class="caixa-pequena campo-p" type="text" placeholder="Ex: 288 60 280" />
+          <button class="botao-executar" type="submit">Descriptografar</button> 
+
+          <div class="caixa-result">
+          <p>Mensagem descriptografada: <span id="chaveDescript"></span></p>
+          </div>
+        </form>
+        
+        <script src="rsa.js"></script>
+        <script src="script.js"></script>
+        </body>
+        </html>
