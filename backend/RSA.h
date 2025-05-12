@@ -8,6 +8,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+// Função para criar diretórios se não existirem
+void criar_diretorios() {
+    mkdir("chaves", 0755);    // Cria pasta para chaves
+    mkdir("mensagens", 0755); // Cria pasta para mensagens
+}
+
 // Função para gerar chaves RSA
 void gerar_chaves_rsa() {
     mpz_t p, q, e, n, phi, d, p1, q1;
@@ -42,13 +48,13 @@ void gerar_chaves_rsa() {
     gmp_printf("Sua chave pública é: (e=%Zd, n=%Zd)\n", e, n);
     gmp_printf("Sua chave privada é: (d=%Zd, n=%Zd)\n", d, n);
 
-    // Cria diretório "chaves" se não existir
-    mkdir("chaves", 0755); // Permissão padrão
+    // Garante que os diretórios existam
+    criar_diretorios();
 
     // Salva chave pública
     FILE *chavePublica = fopen("chaves/chave_publica.txt", "w");
     if (chavePublica == NULL) {
-        perror("Erro ao criar chave_publica.txt");
+        perror("Erro ao criar chaves/chave_publica.txt");
         return;
     }
     gmp_fprintf(chavePublica, "%Zd %Zd", e, n);
@@ -57,56 +63,87 @@ void gerar_chaves_rsa() {
     // Salva chave privada
     FILE *chavePrivada = fopen("chaves/chave_privada.txt", "w");
     if (chavePrivada == NULL) {
-        perror("Erro ao criar chave_privada.txt");
+        perror("Erro ao criar chaves/chave_privada.txt");
         return;
     }
     gmp_fprintf(chavePrivada, "%Zd %Zd", d, n);
     fclose(chavePrivada);
 
     mpz_clears(p, q, e, n, phi, d, p1, q1, NULL);
+    printf("Suas chaves foram salvas em:\n");
+    printf("- chaves/chave_publica.txt\n");
+    printf("- chaves/chave_privada.txt\n");
 }
 
-// Função para criptografar mensagem
+// Função para criptografar mensagem a partir de um arquivo
 void criptografar_mensagem() {
-    char *mensagem = NULL;
-    size_t tamanho = 0;
     char n_str[1024], e_str[1024];
+    mpz_t n, e, m, c;
+    mpz_inits(n, e, m, c, NULL);
 
-    printf("Digite a mensagem: ");
-    ssize_t lidos = getline(&mensagem, &tamanho, stdin);
-    if (lidos == -1) {
-        perror("Erro ao ler mensagem");
+    // Garante que os diretórios existam
+    criar_diretorios();
+
+    // Abre o arquivo de mensagem original
+    FILE *arquivo = fopen("encriptar.txt", "r");
+    if (arquivo == NULL) {
+        perror("Erro ao abrir encriptar.txt");
+        mpz_clears(n, e, m, c, NULL);
         return;
     }
-    mensagem[strcspn(mensagem, "\n")] = '\0'; 
 
-    printf("Digite o valor de n: ");
-    fgets(n_str, sizeof(n_str), stdin);
-    n_str[strcspn(n_str, "\n")] = '\0';
+    // Lê o conteúdo do arquivo
+    char *mensagem = NULL;
+    size_t tamanho = 0;
+    ssize_t lidos = getdelim(&mensagem, &tamanho, '\0', arquivo);
+    fclose(arquivo);
+    
+    if (lidos == -1) {
+        perror("Erro ao ler encriptar.txt");
+        free(mensagem);
+        mpz_clears(n, e, m, c, NULL);
+        return;
+    }
+
+    // Remove possível nova linha no final
+    mensagem[strcspn(mensagem, "\n")] = '\0';
 
     printf("Digite o valor de e: ");
     fgets(e_str, sizeof(e_str), stdin);
     e_str[strcspn(e_str, "\n")] = '\0';
 
-    mpz_t n, e, m, c;
-    mpz_inits(n, e, m, c, NULL);
+    printf("Digite o valor de n: ");
+    fgets(n_str, sizeof(n_str), stdin);
+    n_str[strcspn(n_str, "\n")] = '\0';
+
     mpz_set_str(n, n_str, 10); 
     mpz_set_str(e, e_str, 10);  
 
-    printf("Mensagem criptografada (valores inteiros):\n");
+    // Abre arquivo para salvar mensagem criptografada
+    FILE *arquivo_cripto = fopen("mensagens/criptografia.txt", "w");
+    if (arquivo_cripto == NULL) {
+        perror("Erro ao criar mensagens/criptografia.txt");
+        free(mensagem);
+        mpz_clears(n, e, m, c, NULL);
+        return;
+    }
 
+    printf("Mensagem criptografada (valores inteiros):\n");
     for (size_t i = 0; i < strlen(mensagem); i++) {
         char letra = mensagem[i];
         int ascii = (int)letra;
         mpz_set_ui(m, ascii);
         mpz_powm(c, m, e, n);
-        gmp_printf("%Zd ", c); 
+        gmp_printf("%Zd ", c);
+        gmp_fprintf(arquivo_cripto, "%Zd ", c);
     }
 
     printf("\n");
+    fclose(arquivo_cripto);
 
     mpz_clears(n, e, m, c, NULL);
     free(mensagem);
+    printf("Sua mensagem criptografada foi salva em: mensagens/criptografia.txt\n");
 }
 
 // Função auxiliar para exponenciação modular
@@ -127,16 +164,18 @@ void inverso_modular(mpz_t resultado, mpz_t a, mpz_t m) {
     }
 }
 
-// Função para descriptografar mensagem
 // Função para descriptografar mensagem a partir de um arquivo
 void descriptografar_mensagem() {
     mpz_t p, q, e, d, n, phi, curr, descriptado;
     mpz_inits(p, q, e, d, n, phi, curr, descriptado, NULL);
 
-    // Abre o arquivo fixo "critogtafia.txt"
-    FILE *arquivo = fopen("critogtafia.txt", "r");
+    // Garante que os diretórios existam
+    criar_diretorios();
+
+    // Abre o arquivo fixo "criptografia.txt"
+    FILE *arquivo = fopen("criptografia.txt", "r");
     if (arquivo == NULL) {
-        perror("Erro ao abrir o arquivo critogtafia.txt");
+        perror("Erro ao abrir o arquivo criptografia.txt");
         mpz_clears(p, q, e, d, n, phi, curr, descriptado, NULL);
         return;
     }
@@ -148,7 +187,7 @@ void descriptografar_mensagem() {
     fclose(arquivo);
     
     if (lidos == -1) {
-        perror("Erro ao ler o arquivo critogtafia.txt");
+        perror("Erro ao ler o arquivo criptografia.txt");
         free(conteudo);
         mpz_clears(p, q, e, d, n, phi, curr, descriptado, NULL);
         return;
@@ -179,6 +218,15 @@ void descriptografar_mensagem() {
     // Calcula d (inverso modular de e em relação a phi)
     inverso_modular(d, e, phi);
 
+    // Abre arquivo para salvar mensagem descriptografada
+    FILE *arquivo_descripto = fopen("mensagens/mensagem_descriptografada.txt", "w");
+    if (arquivo_descripto == NULL) {
+        perror("Erro ao criar mensagens/mensagem_descriptografada.txt");
+        free(conteudo);
+        mpz_clears(p, q, e, d, n, phi, curr, descriptado, NULL);
+        return;
+    }
+
     // Processa a mensagem criptografada
     printf("Mensagem descriptografada: ");
     char *token = strtok(conteudo, " ");
@@ -194,13 +242,16 @@ void descriptografar_mensagem() {
             break;
         }
         printf("%c", (char)caractere);
+        fprintf(arquivo_descripto, "%c", (char)caractere);
         token = strtok(NULL, " ");
     }
     printf("\n");
 
-    // Libera memória
+    // Fecha arquivo e libera memória
+    fclose(arquivo_descripto);
     mpz_clears(p, q, e, d, n, phi, curr, descriptado, NULL);
     free(conteudo);
+    printf("Sua mensagem descriptografada foi salva em: mensagens/mensagem_descriptografada.txt\n");
 }
 
 #endif
