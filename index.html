@@ -9,9 +9,9 @@
 
   <script>
     var Module = {
-      wasmBinaryFile: 'back/RSA.wasm',
+      wasmBinaryFile: 'RSA.wasm',
       locateFile: function(path) {
-        if (path.endsWith('.wasm')) return 'back/RSA.wasm';
+        if (path.endsWith('.wasm')) return 'RSA.wasm';
         return path;
       },
       onRuntimeInitialized: function() {
@@ -64,7 +64,7 @@
       <div class="caixa-result"></div>
     </div>
   </div>
-  <script src="back/RSA.js"></script>
+  <script src="RSA.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
